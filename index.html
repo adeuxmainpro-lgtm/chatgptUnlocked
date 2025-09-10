@@ -3,190 +3,291 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SportLetters</title>
+  <title>SportLetters Deluxe</title>
+  <!-- Tailwind CSS for rapid styling -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.0/dist/tailwind.min.css" rel="stylesheet">
+  <!-- Include a lightweight font for a modern look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+    /* Custom scrollbar for a polished feel */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
+  </style>
 </head>
-<body>
-  <div id="root"></div>
+<body class="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white flex flex-col">
+  <div id="root" class="flex-grow"></div>
 
+  <!-- Load React and ReactDOM -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Load Babel to allow JSX in the browser -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <script type="text/babel">
-  const ATHLETES = {
-    football: [
-      'Lionel Messi', 'Cristiano Ronaldo', 'Kylian Mbappé', 'Neymar', 'Zinedine Zidane',
-      'Pelé', 'Diego Maradona', 'Robert Lewandowski', 'Karim Benzema', 'Luka Modrić'
-    ],
-    tennis: [
-      'Roger Federer', 'Rafael Nadal', 'Novak Djokovic', 'Serena Williams', 'Ashleigh Barty',
-      'Naomi Osaka', 'Andy Murray', 'Steffi Graf', 'Pete Sampras', 'Martina Navratilova'
-    ],
-    basketball: [
-      'Michael Jordan', 'LeBron James', 'Kobe Bryant', 'Magic Johnson', 'Larry Bird',
-      'Shaquille O\'Neal', 'Kareem Abdul-Jabbar', 'Kevin Durant', 'Stephen Curry', 'Tim Duncan'
-    ]
-  };
+    /**
+     * Jeu SportLetters Deluxe
+     * - UI modernisée avec Tailwind et animations CSS
+     * - Catégories multiples avec une base enrichie d'athlètes
+     * - Gestion du score local et d'un minuteur
+     * - Génération de lien de défi (paramètres dans l'URL)
+     */
+    const ATHLETES = {
+      football: [
+        'Lionel Messi','Cristiano Ronaldo','Kylian Mbappé','Neymar','Zinedine Zidane','Pelé','Diego Maradona','Robert Lewandowski','Karim Benzema','Luka Modrić','David Beckham','Ronaldinho','Gianluigi Buffon','Franz Beckenbauer','Thierry Henry','Andres Iniesta','Xavi','Sergio Ramos','Mohamed Salah','Sadio Mané'
+      ],
+      tennis: [
+        'Roger Federer','Rafael Nadal','Novak Djokovic','Serena Williams','Ashleigh Barty','Naomi Osaka','Andy Murray','Steffi Graf','Pete Sampras','Martina Navratilova','Venus Williams','Björn Borg','Andre Agassi','Rod Laver','Margaret Court','John McEnroe','Boris Becker','Goran Ivanišević','Lleyton Hewitt','Kim Clijsters'
+      ],
+      basketball: [
+        'Michael Jordan','LeBron James','Kobe Bryant','Magic Johnson','Larry Bird','Shaquille O\'Neal','Kareem Abdul-Jabbar','Kevin Durant','Stephen Curry','Tim Duncan','Wilt Chamberlain','Bill Russell','Hakeem Olajuwon','Allen Iverson','Oscar Robertson','Karl Malone','Charles Barkley','Dwyane Wade','Kawhi Leonard','Giannis Antetokounmpo'
+      ],
+      rugby: [
+        'Jonah Lomu','Richie McCaw','Dan Carter','Brian O\'Driscoll','Maro Itoje','Antoine Dupont','Martin Johnson','Jonny Wilkinson','Sébastien Chabal','Thierry Dusautoir','Serge Blanco','George North','Bakkies Botha','Bryan Habana','Shane Williams','Michael Hooper','David Pocock','Alun Wyn Jones','Rieko Ioane','Kieran Read'
+      ],
+      athletisme: [
+        'Usain Bolt','Carl Lewis','Michael Johnson','Mo Farah','Allyson Felix','Florence Griffith-Joyner','Jesse Owens','Haile Gebrselassie','Asafa Powell','Shelly-Ann Fraser-Pryce','Yelena Isinbayeva','Caster Semenya','David Rudisha','Justin Gatlin','Tyson Gay','Hicham El Guerrouj','Renaud Lavillenie','Jonathan Edwards','Paula Radcliffe','Wayde van Niekerk'
+      ]
+    };
 
-  const categories = Object.keys(ATHLETES);
+    const categories = Object.keys(ATHLETES);
 
-  const getRandomLetter = () => {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    return alphabet[Math.floor(Math.random() * alphabet.length)];
-  };
+    const getRandomLetter = () => {
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      return alphabet[Math.floor(Math.random() * alphabet.length)];
+    };
 
-  function App() {
-    const [category, setCategory] = React.useState(categories[0]);
-    const [letter, setLetter] = React.useState('');
-    const [input, setInput] = React.useState('');
+    function App() {
+      const [category, setCategory] = React.useState(categories[0]);
+      const [letter, setLetter] = React.useState('');
+      const [input, setInput] = React.useState('');
     const [guessed, setGuessed] = React.useState([]);
-    const [errors, setErrors] = React.useState(0);
-    const [gameStarted, setGameStarted] = React.useState(false);
-    const [timer, setTimer] = React.useState(60);
-    const [highScore, setHighScore] = React.useState(() => {
-      const stored = localStorage.getItem('sportletters-highscore');
-      return stored ? parseInt(stored, 10) : 0;
-    });
+      const [errors, setErrors] = React.useState(0);
+      const [gameStarted, setGameStarted] = React.useState(false);
+      const [timer, setTimer] = React.useState(60);
+      const [highScore, setHighScore] = React.useState(() => {
+        const stored = localStorage.getItem('sportletters-highscore-v2');
+        return stored ? parseInt(stored, 10) : 0;
+      });
+      const [view, setView] = React.useState('home');
 
-    React.useEffect(() => {
-      if (gameStarted && timer > 0) {
-        const id = setInterval(() => {
-          setTimer(prev => prev - 1);
-        }, 1000);
-        return () => clearInterval(id);
-      } else if (timer === 0) {
-        endGame();
-      }
-    }, [gameStarted, timer]);
-
-    React.useEffect(() => {
-      const params = new URLSearchParams(window.location.search);
-      const cat = params.get('category');
-      const letParam = params.get('letter');
-      if (cat && categories.includes(cat)) {
-        setCategory(cat);
-      }
-      if (letParam && letParam.length === 1) {
-        setLetter(letParam.toUpperCase());
-      }
-    }, []);
-
-    const startGame = () => {
-      setLetter(getRandomLetter());
-      setGuessed([]);
-      setErrors(0);
-      setTimer(60);
-      setGameStarted(true);
-    };
-
-    const endGame = () => {
-      setGameStarted(false);
-      if (guessed.length > highScore) {
-        setHighScore(guessed.length);
-        localStorage.setItem('sportletters-highscore', guessed.length.toString());
-      }
-    };
-
-    const handleGuess = () => {
-      const guess = input.trim();
-      if (!guess) return;
-      const athletes = ATHLETES[category];
-      const normalized = guess.toLowerCase();
-      const exists = athletes.some(
-        name => name.toLowerCase() === normalized && name.toUpperCase().startsWith(letter)
-      );
-      if (exists) {
-        if (!guessed.includes(guess)) {
-          setGuessed([...guessed, guess]);
+      // Countdown timer
+      React.useEffect(() => {
+        if (gameStarted && timer > 0) {
+          const id = setInterval(() => setTimer(prev => prev - 1), 1000);
+          return () => clearInterval(id);
         }
-      } else {
-        setErrors(errors + 1);
-      }
-      setInput('');
-    };
+        if (timer === 0 && gameStarted) {
+          endGame();
+        }
+      }, [gameStarted, timer]);
 
-    const challengeLink = () => {
-      const url = new URL(window.location.href);
-      url.searchParams.set('category', category);
-      url.searchParams.set('letter', letter);
-      return url.toString();
-    };
+      // Load category & letter from URL if present (challenge mode)
+      React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const cat = params.get('category');
+        const letParam = params.get('letter');
+        if (cat && categories.includes(cat)) {
+          setCategory(cat);
+        }
+        if (letParam && letParam.length === 1) {
+          setLetter(letParam.toUpperCase());
+        }
+      }, []);
 
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-start py-8 px-4 bg-gradient-to-b from-blue-50 to-teal-100">
-        <h1 className="text-4xl font-bold mb-4">SportLetters</h1>
-        <div className="mb-4">
-          <label className="block mb-2 font-medium">Choisir une catégorie:</label>
-          <select
-            className="p-2 border rounded"
-            value={category}
-            onChange={e => setCategory(e.target.value)}
-            disabled={gameStarted}
+      const startGame = () => {
+        setLetter(getRandomLetter());
+        setGuessed([]);
+        setErrors(0);
+        setTimer(60);
+        setGameStarted(true);
+        setView('play');
+      };
+
+      const endGame = () => {
+        setGameStarted(false);
+        setView('score');
+        if (guessed.length > highScore) {
+          setHighScore(guessed.length);
+          localStorage.setItem('sportletters-highscore-v2', guessed.length.toString());
+        }
+      };
+
+      const handleGuess = () => {
+        const guess = input.trim();
+        if (!guess) return;
+        const athletes = ATHLETES[category];
+        const normalized = guess.toLowerCase();
+        const exists = athletes.some(
+          name => name.toLowerCase() === normalized && name.toUpperCase().startsWith(letter)
+        );
+        if (exists) {
+          if (!guessed.map(g => g.toLowerCase()).includes(normalized)) {
+            setGuessed([...guessed, guess]);
+          }
+        } else {
+          setErrors(errors + 1);
+        }
+        setInput('');
+      };
+
+      const challengeLink = () => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('category', category);
+        url.searchParams.set('letter', letter);
+        return url.toString();
+      };
+
+      // Hero section with introduction
+      const HomeSection = () => (
+        <section className="flex flex-col items-center justify-center flex-grow text-center px-4 py-12">
+          <h1 className="text-5xl md:text-6xl font-extrabold drop-shadow-md mb-4 animate-fade-down">
+            SportLetters
+          </h1>
+          <p className="max-w-2xl text-lg md:text-xl mb-8 text-white/90">
+            Testez vos connaissances sportives : trouvez des athlètes par lettre et catégorie, partagez un défi avec vos amis et comparez vos scores.
+          </p>
+          <button
+            className="bg-white text-indigo-600 px-8 py-3 rounded-full shadow-lg hover:bg-gray-100 transition"
+            onClick={startGame}
           >
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-        </div>
-        {gameStarted ? (
-          <div className="w-full max-w-xl">
-            <p className="text-xl mb-2">Lettre: <span className="font-bold">{letter}</span></p>
-            <p className="mb-4">Temps restant: {timer}s</p>
-            <input
-              className="p-2 border rounded w-full mb-2"
-              type="text"
-              placeholder="Tapez un nom de sportif..."
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { handleGuess(); } }}
-            />
+            Commencer à jouer
+          </button>
+        </section>
+      );
+
+      // Selection of categories prior to game (displayed in settings/side panel)
+      const CategorySelector = () => (
+        <div className="flex flex-wrap justify-center gap-2 mb-6">
+          {categories.map(cat => (
             <button
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded w-full"
-              onClick={handleGuess}
-            >Valider</button>
-            <div className="mt-4">
-              <h2 className="text-lg font-semibold mb-2">Sportifs trouvés ({guessed.length}):</h2>
-              <ul className="list-disc list-inside">
+              key={cat}
+              disabled={gameStarted}
+              onClick={() => setCategory(cat)}
+              className={
+                'px-4 py-2 rounded-full border border-white/30 backdrop-blur-md transition-colors ' +
+                (cat === category ? 'bg-white/30 text-white font-semibold' : 'bg-white/10 text-white/80 hover:bg-white/20')
+              }
+            >
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </button>
+          ))}
+        </div>
+      );
+
+      // Game panel during play
+      const PlaySection = () => (
+        <section className="max-w-4xl w-full mx-auto p-6 bg-white/10 backdrop-blur-md rounded-xl shadow-lg animate-fade-up">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold mb-2 md:mb-0">Lettre: <span className="text-indigo-100">{letter}</span></h2>
+            <p className="text-lg">Temps restant: {timer}s</p>
+          </div>
+          <input
+            type="text"
+            placeholder="Nom de sportif commençant par {letter}..."
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleGuess(); }}
+            className="w-full p-3 rounded-md mb-3 text-gray-800 placeholder-gray-500"
+            autoFocus
+          />
+          <button
+            onClick={handleGuess}
+            className="w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md transition"
+          >
+            Valider
+          </button>
+          <div className="mt-4">
+            <h3 className="text-xl font-semibold mb-1">Sportifs trouvés ({guessed.length})</h3>
+            {guessed.length === 0 ? (
+              <p className="text-white/70">Aucun pour le moment...</p>
+            ) : (
+              <ul className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {guessed.map(g => (
-                  <li key={g}>{g}</li>
+                  <li key={g} className="bg-white/20 rounded px-2 py-1 text-sm truncate" title={g}>{g}</li>
                 ))}
               </ul>
-            </div>
-            <p className="mt-4 text-red-600">Nombre d'erreurs: {errors}</p>
-            <p className="mt-2 text-gray-700">Meilleur score: {highScore}</p>
-            <button
-              className="mt-4 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded w-full"
-              onClick={() => setGameStarted(false)}
-            >Terminer la partie</button>
-          </div>
-        ) : (
-          <div className="w-full max-w-md flex flex-col items-center">
-            {letter && (
-              <p className="text-xl mb-4">Lettre sélectionnée: <span className="font-bold">{letter}</span></p>
             )}
+          </div>
+          <div className="flex flex-col md:flex-row md:justify-between items-start mt-4">
+            <p className="text-red-200 mb-2 md:mb-0">Erreurs: {errors}</p>
+            <p className="text-green-200">Meilleur score: {highScore}</p>
+          </div>
+          <div className="mt-6 flex flex-col gap-2">
             <button
-              className="mb-4 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded w-full"
-              onClick={startGame}
+              onClick={endGame}
+              className="py-2 w-full bg-red-500 hover:bg-red-600 text-white rounded-md transition"
             >
-              ▶ Lancer le jeu
+              Terminer la partie
             </button>
-            {letter && (
-              <button
-                className="mb-4 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-white rounded w-full"
-                onClick={() => { navigator.clipboard.writeText(challengeLink()); alert('Lien copié !'); }}
-              >
-                📤 Copier le lien de défi
-              </button>
-            )}
-            <p className="text-gray-600 text-center">Nombre maximum de sportifs trouvés: {highScore}</p>
+            <button
+              onClick={() => { navigator.clipboard.writeText(challengeLink()); alert('Lien de défi copié !'); }}
+              className="py-2 w-full bg-yellow-400 hover:bg-yellow-500 text-gray-800 rounded-md transition"
+            >
+              Copier le lien de défi
+            </button>
           </div>
-        )}
-      </div>
-    );
-  }
+        </section>
+      );
 
-  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+      // Score section after the game ends
+      const ScoreSection = () => (
+        <section className="flex flex-col items-center justify-center text-center">
+          <h2 className="text-4xl font-bold mb-4 animate-fade-down">Partie terminée !</h2>
+          <p className="text-xl mb-2">Vous avez trouvé {guessed.length} sportif{guessed.length > 1 ? 's' : ''}.</p>
+          <p className="mb-6">Meilleur score actuel : {highScore}</p>
+          <div className="space-y-3">
+            <button
+              onClick={startGame}
+              className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-md text-white transition"
+            >
+              Rejouer
+            </button>
+            <button
+              onClick={() => setView('home')}
+              className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-md text-white transition"
+            >
+              Retour à l'accueil
+            </button>
+          </div>
+        </section>
+      );
+
+      return (
+        <div className="flex flex-col flex-grow">
+          <header className="py-6 px-4 flex justify-between items-center">
+            <h1 className="text-2xl font-bold">SportLetters</h1>
+            <nav>
+              <button onClick={() => setView('home')} className="mr-4 underline">Accueil</button>
+              <button onClick={() => setView('play')} className="mr-4 underline" disabled={!gameStarted}>Jouer</button>
+              <button onClick={() => setView('score')} className="underline" disabled={gameStarted}>Score</button>
+            </nav>
+          </header>
+          <main className="flex-grow px-4 md:px-8">
+            {view === 'home' && <HomeSection />}
+            {view !== 'home' && <CategorySelector />}
+            {view === 'play' && <PlaySection />}
+            {view === 'score' && <ScoreSection />}
+          </main>
+          <footer className="py-4 text-center text-xs text-white/70">&copy; 2025 SportLetters</footer>
+        </div>
+      );
+    }
+
+    // Simple fade-in/out animations using TailwindCSS utilities and custom keyframes
+    const styles = document.createElement('style');
+    styles.innerHTML = `
+      @keyframes fade-down { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-fade-down { animation: fade-down 0.5s ease-out; }
+      .animate-fade-up { animation: fade-up 0.5s ease-out; }
+    `;
+    document.head.appendChild(styles);
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
   </script>
 </body>
 </html>

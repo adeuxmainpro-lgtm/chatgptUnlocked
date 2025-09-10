@@ -1,293 +1,352 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SportLetters Deluxe</title>
-  <!-- Tailwind CSS for rapid styling -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.0/dist/tailwind.min.css" rel="stylesheet">
-  <!-- Include a lightweight font for a modern look -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SportLetters — Deluxe</title>
+  <meta name="description" content="Trouvez des sportifs par lettre et par sport. Défis, timer, classement. 100% dynamique (Supabase)." />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: 'Poppins', sans-serif; }
-    /* Custom scrollbar for a polished feel */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
+    :root { color-scheme: dark }
+    .bg-app { background: radial-gradient(1200px 600px at 10% -10%, rgba(16,185,129,.15), transparent),
+                          radial-gradient(1000px 500px at 110% 10%, rgba(59,130,246,.12), transparent),
+                          linear-gradient(180deg, #020617 0%, #0b1220 100%); }
+    .card { background: rgba(2,6,23,.65); border: 1px solid rgba(51,65,85,.5); border-radius: 18px; }
+    .btn { display:inline-flex; gap:.5rem; align-items:center; padding:.6rem 1rem; border-radius:12px; font-weight:600 }
+    .btn-primary { background:#34d399; color:#04131a }
+    .btn-primary:hover{ filter:brightness(1.05) }
+    .btn-secondary{ background:#1f2937; color:#e5e7eb }
+    .pill{ padding:.25rem .7rem; border-radius:9999px; border:1px solid #334155; background:#0b1220; font-size:.85rem }
   </style>
+
+  <!-- Motion One (animations) -->
+  <script type="module">
+    import { animate } from "https://cdn.jsdelivr.net/npm/@motionone/dom/+esm";
+    window.__animate = animate;
+  </script>
+
+  <!-- Supabase (UMD) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+  <!-- Clés Supabase (ANON = public) -->
+  <script>
+    window.SUPABASE_URL = "https://ndajungkcztlspmbfnwq.supabase.co";
+    window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kYWp1bmdrY3p0bHNwbWJmbndxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1MzM5MzgsImV4cCI6MjA3MzEwOTkzOH0.SGOMO4sKyzeCTumHMAmFx-IHbWBmnS5bDcbjx_E4prM";
+  </script>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white flex flex-col">
-  <div id="root" class="flex-grow"></div>
+<body class="bg-app min-h-screen text-slate-100">
+  <!-- Header -->
+  <header class="sticky top-0 z-20 backdrop-blur bg-slate-900/60 border-b border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div id="logo" class="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/30 grid place-items-center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-emerald-300"><path d="M12 3l3.5 7H22l-5.5 4.5L18 21l-6-3.5L6 21l1.5-6.5L2 10h6.5L12 3z" stroke="currentColor"/></svg>
+      </div>
+      <div class="text-xl md:text-2xl font-extrabold">SportLetters</div>
+      <span class="pill ml-1 text-emerald-300/90 border-emerald-700/40">dynamique</span>
+      <nav class="ml-auto flex items-center gap-2 text-sm">
+        <a href="#play" class="pill">Jouer</a>
+        <a href="#leaderboard" class="pill">Classement</a>
+      </nav>
+    </div>
+  </header>
 
-  <!-- Load React and ReactDOM -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <!-- Load Babel to allow JSX in the browser -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <script type="text/babel">
-    /**
-     * Jeu SportLetters Deluxe
-     * - UI modernisée avec Tailwind et animations CSS
-     * - Catégories multiples avec une base enrichie d'athlètes
-     * - Gestion du score local et d'un minuteur
-     * - Génération de lien de défi (paramètres dans l'URL)
-     */
-    const ATHLETES = {
-      football: [
-        'Lionel Messi','Cristiano Ronaldo','Kylian Mbappé','Neymar','Zinedine Zidane','Pelé','Diego Maradona','Robert Lewandowski','Karim Benzema','Luka Modrić','David Beckham','Ronaldinho','Gianluigi Buffon','Franz Beckenbauer','Thierry Henry','Andres Iniesta','Xavi','Sergio Ramos','Mohamed Salah','Sadio Mané'
-      ],
-      tennis: [
-        'Roger Federer','Rafael Nadal','Novak Djokovic','Serena Williams','Ashleigh Barty','Naomi Osaka','Andy Murray','Steffi Graf','Pete Sampras','Martina Navratilova','Venus Williams','Björn Borg','Andre Agassi','Rod Laver','Margaret Court','John McEnroe','Boris Becker','Goran Ivanišević','Lleyton Hewitt','Kim Clijsters'
-      ],
-      basketball: [
-        'Michael Jordan','LeBron James','Kobe Bryant','Magic Johnson','Larry Bird','Shaquille O\'Neal','Kareem Abdul-Jabbar','Kevin Durant','Stephen Curry','Tim Duncan','Wilt Chamberlain','Bill Russell','Hakeem Olajuwon','Allen Iverson','Oscar Robertson','Karl Malone','Charles Barkley','Dwyane Wade','Kawhi Leonard','Giannis Antetokounmpo'
-      ],
-      rugby: [
-        'Jonah Lomu','Richie McCaw','Dan Carter','Brian O\'Driscoll','Maro Itoje','Antoine Dupont','Martin Johnson','Jonny Wilkinson','Sébastien Chabal','Thierry Dusautoir','Serge Blanco','George North','Bakkies Botha','Bryan Habana','Shane Williams','Michael Hooper','David Pocock','Alun Wyn Jones','Rieko Ioane','Kieran Read'
-      ],
-      athletisme: [
-        'Usain Bolt','Carl Lewis','Michael Johnson','Mo Farah','Allyson Felix','Florence Griffith-Joyner','Jesse Owens','Haile Gebrselassie','Asafa Powell','Shelly-Ann Fraser-Pryce','Yelena Isinbayeva','Caster Semenya','David Rudisha','Justin Gatlin','Tyson Gay','Hicham El Guerrouj','Renaud Lavillenie','Jonathan Edwards','Paula Radcliffe','Wayde van Niekerk'
-      ]
-    };
-
-    const categories = Object.keys(ATHLETES);
-
-    const getRandomLetter = () => {
-      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      return alphabet[Math.floor(Math.random() * alphabet.length)];
-    };
-
-    function App() {
-      const [category, setCategory] = React.useState(categories[0]);
-      const [letter, setLetter] = React.useState('');
-      const [input, setInput] = React.useState('');
-    const [guessed, setGuessed] = React.useState([]);
-      const [errors, setErrors] = React.useState(0);
-      const [gameStarted, setGameStarted] = React.useState(false);
-      const [timer, setTimer] = React.useState(60);
-      const [highScore, setHighScore] = React.useState(() => {
-        const stored = localStorage.getItem('sportletters-highscore-v2');
-        return stored ? parseInt(stored, 10) : 0;
-      });
-      const [view, setView] = React.useState('home');
-
-      // Countdown timer
-      React.useEffect(() => {
-        if (gameStarted && timer > 0) {
-          const id = setInterval(() => setTimer(prev => prev - 1), 1000);
-          return () => clearInterval(id);
-        }
-        if (timer === 0 && gameStarted) {
-          endGame();
-        }
-      }, [gameStarted, timer]);
-
-      // Load category & letter from URL if present (challenge mode)
-      React.useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const cat = params.get('category');
-        const letParam = params.get('letter');
-        if (cat && categories.includes(cat)) {
-          setCategory(cat);
-        }
-        if (letParam && letParam.length === 1) {
-          setLetter(letParam.toUpperCase());
-        }
-      }, []);
-
-      const startGame = () => {
-        setLetter(getRandomLetter());
-        setGuessed([]);
-        setErrors(0);
-        setTimer(60);
-        setGameStarted(true);
-        setView('play');
-      };
-
-      const endGame = () => {
-        setGameStarted(false);
-        setView('score');
-        if (guessed.length > highScore) {
-          setHighScore(guessed.length);
-          localStorage.setItem('sportletters-highscore-v2', guessed.length.toString());
-        }
-      };
-
-      const handleGuess = () => {
-        const guess = input.trim();
-        if (!guess) return;
-        const athletes = ATHLETES[category];
-        const normalized = guess.toLowerCase();
-        const exists = athletes.some(
-          name => name.toLowerCase() === normalized && name.toUpperCase().startsWith(letter)
-        );
-        if (exists) {
-          if (!guessed.map(g => g.toLowerCase()).includes(normalized)) {
-            setGuessed([...guessed, guess]);
-          }
-        } else {
-          setErrors(errors + 1);
-        }
-        setInput('');
-      };
-
-      const challengeLink = () => {
-        const url = new URL(window.location.href);
-        url.searchParams.set('category', category);
-        url.searchParams.set('letter', letter);
-        return url.toString();
-      };
-
-      // Hero section with introduction
-      const HomeSection = () => (
-        <section className="flex flex-col items-center justify-center flex-grow text-center px-4 py-12">
-          <h1 className="text-5xl md:text-6xl font-extrabold drop-shadow-md mb-4 animate-fade-down">
-            SportLetters
-          </h1>
-          <p className="max-w-2xl text-lg md:text-xl mb-8 text-white/90">
-            Testez vos connaissances sportives : trouvez des athlètes par lettre et catégorie, partagez un défi avec vos amis et comparez vos scores.
-          </p>
-          <button
-            className="bg-white text-indigo-600 px-8 py-3 rounded-full shadow-lg hover:bg-gray-100 transition"
-            onClick={startGame}
-          >
-            Commencer à jouer
-          </button>
-        </section>
-      );
-
-      // Selection of categories prior to game (displayed in settings/side panel)
-      const CategorySelector = () => (
-        <div className="flex flex-wrap justify-center gap-2 mb-6">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              disabled={gameStarted}
-              onClick={() => setCategory(cat)}
-              className={
-                'px-4 py-2 rounded-full border border-white/30 backdrop-blur-md transition-colors ' +
-                (cat === category ? 'bg-white/30 text-white font-semibold' : 'bg-white/10 text-white/80 hover:bg-white/20')
-              }
-            >
-              {cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </button>
-          ))}
+  <!-- Main -->
+  <main class="max-w-6xl mx-auto px-4 py-8 grid lg:grid-cols-[1fr_360px] gap-6">
+    <!-- Left: Game -->
+    <section class="space-y-4 lg:space-y-6" id="play">
+      <!-- Hero -->
+      <div class="card p-6 md:p-8">
+        <h1 class="text-3xl md:text-5xl font-extrabold leading-tight">
+          Trouve un <span class="text-emerald-400">sportif</span> par lettre.
+        </h1>
+        <p class="mt-3 text-slate-300 max-w-2xl">
+          Timer, score, classement. Les catégories et validations viennent en direct de la base Supabase.
+          Partage un défi via le lien !
+        </p>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <a href="#play" class="btn btn-primary">Commencer</a>
+          <a href="#sponsor" class="btn btn-secondary">Sponsor / Affiliation</a>
         </div>
-      );
+      </div>
 
-      // Game panel during play
-      const PlaySection = () => (
-        <section className="max-w-4xl w-full mx-auto p-6 bg-white/10 backdrop-blur-md rounded-xl shadow-lg animate-fade-up">
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold mb-2 md:mb-0">Lettre: <span className="text-indigo-100">{letter}</span></h2>
-            <p className="text-lg">Temps restant: {timer}s</p>
+      <!-- Game card -->
+      <div class="card p-4 md:p-6" id="game">
+        <div class="flex flex-wrap items-center gap-3">
+          <input id="pseudo" placeholder="Votre pseudo" class="w-40 bg-slate-800 border border-slate-700 rounded px-2 py-1" />
+          <select id="category" class="w-44 bg-slate-800 border border-slate-700 rounded px-2 py-1"></select>
+          <select id="letter" class="w-24 bg-slate-800 border border-slate-700 rounded px-2 py-1"></select>
+          <div class="flex items-center gap-2">
+            <span class="text-xs opacity-70">⏱</span>
+            <select id="secs" class="w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1">
+              <option>60</option><option selected>90</option><option>120</option><option>180</option>
+            </select>
           </div>
-          <input
-            type="text"
-            placeholder="Nom de sportif commençant par {letter}..."
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleGuess(); }}
-            className="w-full p-3 rounded-md mb-3 text-gray-800 placeholder-gray-500"
-            autoFocus
-          />
-          <button
-            onClick={handleGuess}
-            className="w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md transition"
-          >
-            Valider
-          </button>
-          <div className="mt-4">
-            <h3 className="text-xl font-semibold mb-1">Sportifs trouvés ({guessed.length})</h3>
-            {guessed.length === 0 ? (
-              <p className="text-white/70">Aucun pour le moment...</p>
-            ) : (
-              <ul className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {guessed.map(g => (
-                  <li key={g} className="bg-white/20 rounded px-2 py-1 text-sm truncate" title={g}>{g}</li>
-                ))}
-              </ul>
-            )}
+          <div class="ml-auto flex gap-2">
+            <button id="playBtn" class="btn btn-primary">Démarrer</button>
+            <button id="resetBtn" class="btn btn-secondary">Réinitialiser</button>
           </div>
-          <div className="flex flex-col md:flex-row md:justify-between items-start mt-4">
-            <p className="text-red-200 mb-2 md:mb-0">Erreurs: {errors}</p>
-            <p className="text-green-200">Meilleur score: {highScore}</p>
-          </div>
-          <div className="mt-6 flex flex-col gap-2">
-            <button
-              onClick={endGame}
-              className="py-2 w-full bg-red-500 hover:bg-red-600 text-white rounded-md transition"
-            >
-              Terminer la partie
-            </button>
-            <button
-              onClick={() => { navigator.clipboard.writeText(challengeLink()); alert('Lien de défi copié !'); }}
-              className="py-2 w-full bg-yellow-400 hover:bg-yellow-500 text-gray-800 rounded-md transition"
-            >
-              Copier le lien de défi
-            </button>
-          </div>
-        </section>
-      );
-
-      // Score section after the game ends
-      const ScoreSection = () => (
-        <section className="flex flex-col items-center justify-center text-center">
-          <h2 className="text-4xl font-bold mb-4 animate-fade-down">Partie terminée !</h2>
-          <p className="text-xl mb-2">Vous avez trouvé {guessed.length} sportif{guessed.length > 1 ? 's' : ''}.</p>
-          <p className="mb-6">Meilleur score actuel : {highScore}</p>
-          <div className="space-y-3">
-            <button
-              onClick={startGame}
-              className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-md text-white transition"
-            >
-              Rejouer
-            </button>
-            <button
-              onClick={() => setView('home')}
-              className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-md text-white transition"
-            >
-              Retour à l'accueil
-            </button>
-          </div>
-        </section>
-      );
-
-      return (
-        <div className="flex flex-col flex-grow">
-          <header className="py-6 px-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold">SportLetters</h1>
-            <nav>
-              <button onClick={() => setView('home')} className="mr-4 underline">Accueil</button>
-              <button onClick={() => setView('play')} className="mr-4 underline" disabled={!gameStarted}>Jouer</button>
-              <button onClick={() => setView('score')} className="underline" disabled={gameStarted}>Score</button>
-            </nav>
-          </header>
-          <main className="flex-grow px-4 md:px-8">
-            {view === 'home' && <HomeSection />}
-            {view !== 'home' && <CategorySelector />}
-            {view === 'play' && <PlaySection />}
-            {view === 'score' && <ScoreSection />}
-          </main>
-          <footer className="py-4 text-center text-xs text-white/70">&copy; 2025 SportLetters</footer>
         </div>
-      );
+
+        <div class="flex items-center gap-3 mt-3">
+          <div class="flex-1 h-2 bg-slate-800 rounded overflow-hidden"><div id="bar" class="h-full bg-emerald-400" style="width:0%"></div></div>
+          <div class="w-16 text-right font-mono tabular-nums" id="left">90</div>
+        </div>
+
+        <div class="flex gap-2 mt-3">
+          <input id="entry" placeholder="Saisissez un nom" class="flex-1 bg-slate-800 border border-slate-700 rounded px-2 py-2" />
+          <button id="validate" class="btn btn-secondary">Valider</button>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 mt-4">
+          <div>
+            <h3 class="text-sm uppercase tracking-wide opacity-80 mb-2">Trouvés (<span id="countFound">0</span>)</h3>
+            <div id="found" class="flex flex-wrap gap-2"></div>
+          </div>
+          <div>
+            <h3 class="text-sm uppercase tracking-wide opacity-80 mb-2">Erreurs (<span id="countWrong">0</span>)</h3>
+            <div id="wrong" class="flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-800 mt-3">
+          <div class="flex items-center gap-2 text-lg font-semibold">🏆 Score: <span id="score" class="font-mono tabular-nums text-emerald-400">0</span></div>
+          <div class="opacity-70">Meilleur: <span id="best" class="font-mono tabular-nums">0</span></div>
+          <div class="ml-auto">
+            <button id="share" class="pill">Copier lien de défi</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin (hidden: ?admin=1) -->
+      <div id="admin" class="card p-4 hidden">
+        <h3 class="font-semibold">Admin: Import CSV athletes</h3>
+        <p class="text-sm opacity-80">Format: <code>name,category</code> — exécute en lots (1000 max / op).</p>
+        <textarea id="csv" class="w-full h-40 bg-slate-900 border border-slate-800 rounded p-2 mt-2" placeholder="name,category&#10;Kylian Mbappé,Football"></textarea>
+        <div class="mt-2 flex gap-2">
+          <button id="import" class="btn btn-primary">Importer</button>
+          <div id="importStatus" class="text-sm opacity-80"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Ads / Leaderboard -->
+    <aside class="space-y-4">
+      <div class="card p-4" id="sponsor">
+        <h3 class="font-semibold">Espace sponsor / pub</h3>
+        <p class="text-sm opacity-80 mt-1">Place AdSense / Affiliations (billetterie, maillots, streaming) / Sponsor natif.</p>
+      </div>
+
+      <div class="card p-4" id="leaderboard">
+        <h3 class="font-semibold mb-2">Classement (Top 100)</h3>
+        <div class="grid grid-cols-4 gap-2 text-xs opacity-70 border-b border-slate-800 pb-2">
+          <div>Joueur</div><div>Pts</div><div>Mode</div><div>Date</div>
+        </div>
+        <div id="lbRows" class="divide-y divide-slate-800 text-sm"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="max-w-6xl mx-auto px-4 pb-10 pt-4 opacity-70 text-sm">
+    © <span id="year"></span> SportLetters
+  </footer>
+
+  <!-- App logic -->
+  <script type="module">
+    const animate = window.__animate;
+    const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
+    const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+    // State
+    let categories = [];
+    let currentCat = "";
+    let letter = "A";
+    let secs = 90, left = 90, timer = null, running = false;
+    let found = [], wrong = [];
+    let poolCache = {}; // { cat: string[] }
+    let best = Number(localStorage.getItem("sl:best")||"0");
+
+    // UI refs
+    const el = (s)=>document.querySelector(s);
+    const $category = el("#category");
+    const $letter = el("#letter");
+    const $secs = el("#secs");
+    const $left = el("#left");
+    const $bar = el("#bar");
+    const $entry = el("#entry");
+    const $found = el("#found");
+    const $wrong = el("#wrong");
+    const $score = el("#score");
+    const $best = el("#best");
+    const $countFound = el("#countFound");
+    const $countWrong = el("#countWrong");
+    const $pseudo = el("#pseudo");
+
+    // Helpers
+    const norm = s => s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu,"").replace(/[^a-z0-9\s]/g,"").trim();
+
+    // Supabase IO
+    async function loadCategories(){
+      const { data, error } = await sb.from("athletes").select("category").order("category");
+      if (error){ console.error(error); return []; }
+      return [...new Set(data.map(r=>r.category))];
     }
 
-    // Simple fade-in/out animations using TailwindCSS utilities and custom keyframes
-    const styles = document.createElement('style');
-    styles.innerHTML = `
-      @keyframes fade-down { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-      @keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-      .animate-fade-down { animation: fade-down 0.5s ease-out; }
-      .animate-fade-up { animation: fade-up 0.5s ease-out; }
-    `;
-    document.head.appendChild(styles);
+    async function loadPool(cat){
+      if (poolCache[cat]) return poolCache[cat];
+      const { data, error } = await sb.from("athletes").select("name").eq("category", cat).limit(10000);
+      if (error){ console.error(error); return []; }
+      const names = data.map(r=>r.name);
+      poolCache[cat] = names;
+      return names;
+    }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    async function saveScore(points){
+      const player = ($pseudo.value || "anon").slice(0,32);
+      const mode = `${currentCat}-${letter}-${secs}`;
+      await sb.from("scores").insert({ player, points, mode });
+      refreshLeaderboard();
+    }
+
+    async function refreshLeaderboard(){
+      const { data } = await sb.from("scores").select("*").order("points",{ascending:false}).limit(100);
+      const rows = (data||[]).map(r=>
+        `<div class="grid grid-cols-4 gap-2 py-2">
+          <div>${escapeHtml(r.player)}</div>
+          <div class="font-mono">${r.points}</div>
+          <div class="truncate">${escapeHtml(r.mode)}</div>
+          <div class="opacity-70">${new Date(r.created_at).toLocaleString()}</div>
+        </div>`).join("");
+      el("#lbRows").innerHTML = rows || '<div class="py-6 opacity-60">Aucun score pour le moment.</div>';
+    }
+
+    function escapeHtml(s){ return String(s).replace(/[&<>"]\/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])) }
+
+    // Game logic
+    function renderLists(){
+      $found.innerHTML = found.map(n=>`<span class="px-2 py-1 rounded-full bg-emerald-600/20 border border-emerald-700/40 text-emerald-200 text-sm">${escapeHtml(n)}</span>`).join("") || '<div class="opacity-60 text-sm">—</div>';
+      $wrong.innerHTML = wrong.map(n=>`<span class="px-2 py-1 rounded-full border border-rose-700/40 text-rose-300/90 text-sm">${escapeHtml(n)}</span>`).join("") || '<div class="opacity-60 text-sm">—</div>';
+      $countFound.textContent = String(found.length);
+      $countWrong.textContent = String(wrong.length);
+      $score.textContent = String(found.length*10 - wrong.length*2);
+      if (Number($score.textContent) > best){
+        best = Number($score.textContent);
+        localStorage.setItem("sl:best", String(best));
+      }
+      $best.textContent = String(best);
+      animate("#score",{ scale:[1,1.15,1] },{ duration:.35, easing:"ease-in-out" });
+    }
+
+    function setBar(){
+      const pct = running ? (left/secs)*100 : 0;
+      $bar.style.width = pct + "%";
+    }
+
+    function start(){
+      found=[]; wrong=[]; left=secs; running=true; renderLists(); setBar();
+      if (timer) clearInterval(timer);
+      timer = setInterval(()=> {
+        left--; $left.textContent = left; setBar();
+        if (left<=0){ stop(true); }
+      }, 1000);
+      $entry.focus();
+    }
+
+    async function stop(auto=false){
+      running=false; if (timer) clearInterval(timer);
+      await saveScore(Number($score.textContent));
+      if (auto) animate("#bar",{ width:["100%","0%"] },{ duration:.4 });
+    }
+
+    async function submit(){
+      const v = $entry.value.trim();
+      if (!v || !currentCat || !letter) return;
+      $entry.value = "";
+      const names = await loadPool(currentCat);
+      const okLetter = norm(v).startsWith(norm(letter));
+      const hit = names.find(n=> norm(n)===norm(v) );
+      if (hit && okLetter){
+        if (!found.map(norm).includes(norm(hit))) found.push(hit);
+      } else {
+        wrong.push(v);
+      }
+      renderLists();
+    }
+
+    // Share challenge
+    function shareLink(){
+      const u = new URL(location.href);
+      u.searchParams.set("cat", currentCat);
+      u.searchParams.set("letter", letter);
+      u.searchParams.set("secs", String(secs));
+      navigator.clipboard.writeText(u.toString());
+    }
+
+    // Init
+    (async function init(){
+      document.getElementById("year").textContent = (new Date()).getFullYear();
+      // Animate logo on load
+      animate("#logo",{ opacity:[0,1], y:[-8,0] },{ duration:.8 });
+
+      // Letters
+      $letter.innerHTML = LETTERS.map(L=>`<option>${L}</option>`).join("");
+
+      // Load categories
+      categories = await loadCategories();
+      $category.innerHTML = categories.map(c=>`<option>${c}</option>`).join("");
+      currentCat = categories[0] || "";
+
+      // Restore best
+      $best.textContent = String(best);
+
+      // Events
+      document.getElementById("playBtn").onclick = start;
+      document.getElementById("resetBtn").onclick = ()=>{ running=false; clearInterval(timer); found=[]; wrong=[]; left=secs; $left.textContent=secs; renderLists(); setBar(); };
+      document.getElementById("validate").onclick = submit;
+      document.getElementById("share").onclick = shareLink;
+
+      $entry.addEventListener("keydown", e=>{ if (e.key==="Enter") submit(); });
+      $category.addEventListener("change", e=>{ currentCat=e.target.value; });
+      $letter.addEventListener("change", e=>{ letter=e.target.value; });
+      $secs.addEventListener("change", e=>{ secs=Number(e.target.value); left=secs; $left.textContent=secs; setBar(); });
+
+      // Challenge params
+      const q = new URLSearchParams(location.search);
+      if (q.get("cat")) { currentCat = q.get("cat"); $category.value=currentCat; }
+      if (q.get("letter")) { letter = q.get("letter"); $letter.value=letter; }
+      if (q.get("secs")) { secs = Number(q.get("secs")); $secs.value=String(secs); left=secs; $left.textContent=secs; }
+
+      // Admin import visible ?
+      if (q.get("admin")==="1"){
+        document.getElementById("admin").classList.remove("hidden");
+        document.getElementById("import").onclick = async ()=>{
+          const raw = document.getElementById("csv").value.trim();
+          if (!raw) return;
+          const lines = raw.split(/\r?\n/).filter(Boolean);
+          const rows = [];
+          for (let i=0;i<lines.length;i++){
+            if (i===0 && lines[i].toLowerCase().startsWith("name,category")) continue;
+            const [name,category] = lines[i].split(",").map(s=>s?.trim());
+            if (name && category) rows.push({ name, category });
+          }
+          // Batch insert (chunk 1000)
+          let done=0;
+          for (let i=0;i<rows.length;i+=1000){
+            const chunk = rows.slice(i,i+1000);
+            const { error } = await sb.from("athletes").insert(chunk);
+            if (error) { document.getElementById("importStatus").textContent = "Erreur: "+error.message; return; }
+            done += chunk.length;
+            document.getElementById("importStatus").textContent = `Importés: ${done}/${rows.length}`;
+          }
+          categories = await loadCategories();
+          $category.innerHTML = categories.map(c=>`<option>${c}</option>`).join("");
+        };
+      }
+
+      // Leaderboard initial
+      refreshLeaderboard();
+    })();
   </script>
 </body>
 </html>
